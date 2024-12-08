@@ -10,8 +10,8 @@ OTHER FILES:    > .env (not included) - File with the OpenAI API key necessary f
                 > jsonFiles (not included) - This is a directory that contains the data in JSON format used to
                         create embeddings by the LLM for the vector database. You must create and include your own
                         files. Please only use information that you have permission to use.
-                > vector_db - File directory that contain the vector database information necessary for running the 
-                        question and answer execution chain.    
+                > vector_db (not included) - File directory that will be generated when the program is run that contains the vector 
+                              database information necessary for running the question and answer execution chain.    
 """
 
 import os
