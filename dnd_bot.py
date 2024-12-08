@@ -1,6 +1,24 @@
+"""
+NAME:           dnd_bot.py
+AUTHOR:         Mike Kelly
+DATE:           December 12, 2024
+DESCRIPITON:    A chatbot program that takes user questions about the 2024 Dungeons & Dragons rules update
+                and provides that user with an answer in the form of rules text.
+OTHER FILES:    > .env (not included) - File with the OpenAI API key necessary for embedding and execution of the LLM
+                > requirements.txt - File with all Python dependencies necessary to run the project.
+                        $pip install -r requiements.txt to install in local environment.
+                > jsonFiles (not included) - This is a directory that contains the data in JSON format used to
+                        create embeddings by the LLM for the vector database. You must create and include your own
+                        files. Please only use information that you have permission to use.
+                > vector_db - File directory that contain the vector database information necessary for running the 
+                        question and answer execution chain.    
+"""
+
 import os
 from dotenv import load_dotenv
 import openai
+from langchain.document_loaders import JSONLoader, DirectoryLoader, UnstructuredMarkdownLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
@@ -12,14 +30,35 @@ from langchain import LLMChain
 import gradio as gr
 import warnings
 
-# ignore deprication warnings
+# ignore deprication warnings because they're annoying
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# Create .env file to use your OpenAI API key
+
+# load the documents for parsing and embedding
+# Json files
+json_load = DirectoryLoader('jsonFiles', glob="**/[!.]*.json", loader_cls=JSONLoader, loader_kwargs={"jq_schema" : ".[]", "text_content" : False})
+json_data = json_load.load()
+json_data
+
+# split the text for embeddings
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size = 1000,
+    chunk_overlap = 20,
+    length_function = len
+)
+
+data = json_data
+documents = text_splitter.split_documents(data)
+
+
+# Load OpenAI API key from .env file
 load_dotenv()
 openai.api_key= os.environ["OPENAI_API_KEY"]
 
+# Choose embedding model
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+# Persistent directory name for the local vector database returned from OpenAI
 persist_directory = "vector_db"
 
 """
